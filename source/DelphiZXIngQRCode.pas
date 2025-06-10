@@ -24,11 +24,25 @@ unit DelphiZXingQRCode;
   {$MODE DELPHI}
 {$EndIf}
 
+{$IfDef NEXTGEN}
+  {$ZEROBASEDSTRINGS OFF}
+  {$Define HAS_SYSTEM_GENERICS}
+  {$Define USE_UTF8}
+{$EndIf}
+
 interface
 
 type
   TQRCodeEncoding = (qrAuto, qrNumeric, qrAlphanumeric, qrISO88591, qrUTF8NoBOM, qrUTF8BOM);
   T2DBooleanArray = array of array of Boolean;
+
+  {$IfDef NEXTGEN}
+    AnsiString = RawByteString;
+    WideString = String;
+    AnsiChar = Char;
+  {$EndIf}
+
+  { TDelphiZXingQRCode }
 
   TDelphiZXingQRCode = class
   protected
@@ -56,7 +70,14 @@ type
 implementation
 
 uses
-  contnrs, Math, Classes;
+  {$IF DEFINED(HAS_SYSTEM_GENERICS)}
+   System.Generics.Collections,
+  {$ELSEIF DEFINED(DELPHICOMPILER16_UP)}
+   System.Contnrs,
+  {$Else}
+   Contnrs,
+  {$IfEnd}
+   Math, Classes;
 
 type
   TByteArray = array of Byte;
@@ -444,7 +465,7 @@ type
   TReedSolomonEncoder = class
   private
     FField: TGenericGF;
-    FCachedGenerators: TObjectList;
+    FCachedGenerators: TObjectList{$IfDef HAS_SYSTEM_GENERICS}<TGenericGFPoly>{$EndIf};
   public
     constructor Create(AField: TGenericGF);
     destructor Destroy; override;
@@ -1053,7 +1074,7 @@ begin
     end else
     if (Mode = qmAlphanumeric) then
     begin
-      CanAdd := GetAlphanumericCode(Ord(Content[X])) > 0;
+      CanAdd := GetAlphanumericCode(Ord(Content[X])) > -1;
     end else
     if (Mode = qmByte) then
     begin
@@ -1363,7 +1384,7 @@ var
   DataBytesOffset: Integer;
   MaxNumDataBytes: Integer;
   MaxNumECBytes: Integer;
-  Blocks: TObjectList;
+  Blocks: TObjectList{$IfDef HAS_SYSTEM_GENERICS}<TBlockPair>{$EndIf};
   NumDataBytesInBlock: TIntegerArray;
   NumECBytesInBlock: TIntegerArray;
   Size: Integer;
@@ -1388,7 +1409,7 @@ begin
   MaxNumEcBytes := 0;
 
   // Since, we know the number of reedsolmon blocks, we can initialize the vector with the number.
-  Blocks := TObjectList.Create(True);
+  Blocks := TObjectList{$IfDef HAS_SYSTEM_GENERICS}<TBlockPair>{$EndIf}.Create(True);
   try
     Blocks.Capacity := NumRSBlocks;
 
@@ -3034,7 +3055,7 @@ begin
   FField := AField;
 
   // Contents of FCachedGenerators will be freed by FGenericGF.Destroy
-  FCachedGenerators := TObjectList.Create(False);
+  FCachedGenerators := TObjectList{$IfDef HAS_SYSTEM_GENERICS}<TGenericGFPoly>{$EndIf}.Create(False);
 
   SetLength(IntArray, 1);
   IntArray[0] := 1;

@@ -71,15 +71,19 @@ unit fpdf;
 interface
 
 uses
-  Classes,Contnrs,
+  Classes,
   {$IfDef FPC}
-   zstream
+   zstream,
   {$Else}
-   {$IfDef HAS_SYSTEM_GENERICS}
-    System.Generics.Collections, System.Generics.Defaults,
-   {$EndIf}
-   ZLib
-  {$EndIf},
+   ZLib,
+  {$EndIf}
+  {$IF DEFINED(HAS_SYSTEM_GENERICS)}
+   System.Generics.Collections, System.Generics.Defaults,
+  {$ELSEIF DEFINED(DELPHICOMPILER16_UP)}
+   System.Contnrs,
+  {$Else}
+   Contnrs,
+  {$IfEnd}
   SysUtils;
 
 const
@@ -361,6 +365,7 @@ type
 
     procedure SetTimeZone(const ATimeZone: String = 'Z');
     procedure SetUTF8(mode: Boolean = True);
+    function GetUTF8: Boolean;
 
     procedure Error(const ATextMsg: String; E: Exception = nil);
     procedure Close;
@@ -427,8 +432,8 @@ type
   end;
 
 const
-  CFontEncodeStr: array[TFPDFFontEncode] of shortstring = ('', 'cp1252');
-  CFontType: array[TFPDFFontType] of shortstring =('Core', 'TrueType', 'Type1');
+  CFontEncodeStr: array[TFPDFFontEncode] of string = ('', 'cp1252');
+  CFontType: array[TFPDFFontType] of string =('Core', 'TrueType', 'Type1');
   CPDFRotation: array[TFPDFRotation] of Integer = (0, 90, 180, 270);
   cUNIT: array[TFPDFUnit] of Double = (1, (72 / 25.4), (72 / 2.54), 72, 0.75);
   cCOLOR: array[TFPDFColor] of array [0..2] of smallint = (
@@ -859,6 +864,11 @@ end;
 procedure TFPDF.SetUTF8(mode: Boolean);
 begin
   Self.UseUTF8 := mode;
+end;
+
+function TFPDF.GetUTF8: Boolean;
+begin
+  Result := UseUTF8;
 end;
 
 procedure TFPDF.Error(const ATextMsg: String; E: Exception);
