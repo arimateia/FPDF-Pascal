@@ -96,6 +96,13 @@ begin
   pdf.Write(4, 'Layers Test', IntToStr(fpl7));
   pdf.Ln(16);
   pdf.Cell(0, 10, 'FPDF Pascal on GitHub', 'TB', 0, 'C', False, cGITURL);
+  pdf.Ln(16);
+  pdf.SetFont('Helvetica','',14);
+  pdf.Cell(0, 10, 'Accented characters test.', 'T', 0, 'C', False);
+  pdf.Ln(8);
+  pdf.Cell(0, 10, 'demofpdfpascal.pas is UTF8 encoded... SetUtf8(True)', '', 0, 'C', False);
+  pdf.Ln(8);
+  pdf.Cell(0, 10, 'ÁÉÍÓÚ áéíóú Çç ÃÕ ãõ', 'B', 0, 'C', False);
   pdf.Ln(8);
 
 end;
@@ -104,6 +111,7 @@ procedure TPDFDemo.PrintFontsTest;
 var
   AllChars: AnsiString;
   i: Integer;
+  OldUtf8: Boolean;
 begin
   if not Assigned(pdf) then
     Exit;
@@ -113,61 +121,65 @@ begin
     AllChars := AllChars + chr(i)+' ';
 
   PageTitle := 'FPDF Pascal - Fonts Test';
+  OldUtf8 := pdf.GetUTF8;
   pdf.SetUTF8(False);
-  pdf.AddPage;
-  pdf.SetLink(fpl1);
-  pdf.SetFont('Courier','',14);
-  pdf.Write(6.5,'Courier     ');
-  pdf.SetFont('Courier','B',14);
-  pdf.Write(6.5,'Courier - Bold     ');
-  pdf.SetFont('Courier','BI',14);
-  pdf.Write(6.5,'Courier - Bold Italic');
-  pdf.Ln;
-  pdf.SetFont('Courier', '', 10);
-  pdf.MultiCell(0, 5, AllChars);
-  pdf.Ln;
+  try
+    pdf.AddPage;
+    pdf.SetLink(fpl1);
+    pdf.SetFont('Courier','',14);
+    pdf.Write(6.5,'Courier     ');
+    pdf.SetFont('Courier','B',14);
+    pdf.Write(6.5,'Courier - Bold     ');
+    pdf.SetFont('Courier','BI',14);
+    pdf.Write(6.5,'Courier - Bold Italic');
+    pdf.Ln;
+    pdf.SetFont('Courier', '', 10);
+    pdf.MultiCell(0, 5, AllChars);
+    pdf.Ln;
 
-  pdf.Ln;
-  pdf.SetFont('Helvetica','',14);
-  pdf.Write(6.5,'Helvetica     ');
-  pdf.SetFont('Helvetica','B');
-  pdf.Write(6.5,'Helvetica - Bold     ');
-  pdf.SetFont('Helvetica','BI');
-  pdf.Write(6.5,'Helvetica - Bold Italic');
-  pdf.Ln;
-  pdf.SetFont('Helvetica', '', 10);
-  pdf.MultiCell(0, 5, AllChars);
-  pdf.Ln;
+    pdf.Ln;
+    pdf.SetFont('Helvetica','',14);
+    pdf.Write(6.5,'Helvetica     ');
+    pdf.SetFont('Helvetica','B');
+    pdf.Write(6.5,'Helvetica - Bold     ');
+    pdf.SetFont('Helvetica','BI');
+    pdf.Write(6.5,'Helvetica - Bold Italic');
+    pdf.Ln;
+    pdf.SetFont('Helvetica', '', 10);
+    pdf.MultiCell(0, 5, AllChars);
+    pdf.Ln;
 
-  pdf.Ln;
-  pdf.SetFont('Times','',14);
-  pdf.Write(6.5,'Times Roman     ');
-  pdf.SetFont('Times','B');
-  pdf.Write(6.5,'Times - Bold     ');
-  pdf.SetFont('Times','BI');
-  pdf.Write(6.5,'Times - Bold Italic');
-  pdf.Ln;
-  pdf.SetFont('Times', '', 10);
-  pdf.MultiCell(0, 5, AllChars);
-  pdf.Ln;
+    pdf.Ln;
+    pdf.SetFont('Times','',14);
+    pdf.Write(6.5,'Times Roman     ');
+    pdf.SetFont('Times','B');
+    pdf.Write(6.5,'Times - Bold     ');
+    pdf.SetFont('Times','BI');
+    pdf.Write(6.5,'Times - Bold Italic');
+    pdf.Ln;
+    pdf.SetFont('Times', '', 10);
+    pdf.MultiCell(0, 5, AllChars);
+    pdf.Ln;
 
-  pdf.Ln;
-  pdf.SetFont('Helvetica','',14);
-  pdf.Write(6.5,'Symbol');
-  pdf.Ln;
-  pdf.SetFont('Symbol','', 10);
-  pdf.MultiCell(0, 5, AllChars);
-  pdf.Ln;
+    pdf.Ln;
+    pdf.SetFont('Helvetica','',14);
+    pdf.Write(6.5,'Symbol');
+    pdf.Ln;
+    pdf.SetFont('Symbol','', 10);
+    pdf.MultiCell(0, 5, AllChars);
+    pdf.Ln;
 
-  pdf.Ln;
-  pdf.SetFont('Helvetica','',14);
-  pdf.Write(6.5,'ZapfDingbats');
-  pdf.Ln;
-  pdf.SetFont('ZapfDingbats', '', 10);
-  pdf.MultiCell(0, 5, AllChars);
-  pdf.Ln;
-
-  pdf.SetFont('Helvetica','',14);
+    pdf.Ln;
+    pdf.SetFont('Helvetica','',14);
+    pdf.Write(6.5,'ZapfDingbats');
+    pdf.Ln;
+    pdf.SetFont('ZapfDingbats', '', 10);
+    pdf.MultiCell(0, 5, AllChars);
+    pdf.Ln;
+  finally
+    pdf.SetFont('Helvetica','',14);
+    pdf.SetUTF8(OldUtf8);
+  end;
 end;
 
 procedure TPDFDemo.PrintImagesTest;
@@ -432,7 +444,7 @@ end;
 
 constructor TPDFDemo.Create;
 begin
-  fpdir := ExtractFilePath(ParamStr(0)) + PathDelim;
+  fpdir := ExtractFilePath(ParamStr(0));
   fpfiledir := fpdir +  '..' + PathDelim + 'files' + PathDelim;
 end;
 
@@ -477,6 +489,7 @@ begin
     pdf.OnHeader := @PrintHeader;
     pdf.OnFooter := @PrintFooter;
     pdf.SetCompression(True);
+    pdf.SetUTF8(True);  // Lazarus uses UTF8
     //pdf.SetProtection([canPrint, canCopy], '1234', '5678');
 
     PrintIndex;
