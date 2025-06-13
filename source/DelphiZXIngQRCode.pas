@@ -20,15 +20,7 @@ unit DelphiZXingQRCode;
  * limitations under the License.
  *)
 
-{$IfDef FPC}
-  {$MODE DELPHI}
-{$EndIf}
-
-{$IfDef NEXTGEN}
-  {$ZEROBASEDSTRINGS OFF}
-  {$Define HAS_SYSTEM_GENERICS}
-  {$Define USE_UTF8}
-{$EndIf}
+{$I fpdf.inc}
 
 interface
 
@@ -72,7 +64,7 @@ implementation
 uses
   {$IF DEFINED(HAS_SYSTEM_GENERICS)}
    System.Generics.Collections,
-  {$ELSEIF DEFINED(DELPHICOMPILER16_UP)}
+  {$ELSEIF DEFINED(HAS_SYSTEM_CONTNRS)}
    System.Contnrs,
   {$Else}
    Contnrs,
