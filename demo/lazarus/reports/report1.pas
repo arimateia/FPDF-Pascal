@@ -73,7 +73,7 @@ begin
 
   Args.PDF.SetFont('Arial', 'B', 14);
   Args.PDF.TextBox(FIndent, 0, Args.Band.Width, Args.Band.Height,
-    'Report Header', 'C', 'L', False);
+    'Report Header ÁÉÍÓÚ', 'C', 'L', False);
 end;
 
 procedure TReport1.DrawTopMargin(Args: TFPDFBandDrawArgs);

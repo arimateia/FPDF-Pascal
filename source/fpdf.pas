@@ -36,50 +36,24 @@
 
 unit fpdf;
 
-// If you don't want the AnsiString vs String warnings to bother you
-//{$DEFINE REMOVE_CAST_WARN}
-
-{$IfNDef FPC}
-  {$IFDEF REMOVE_CAST_WARN}
-   {$IF CompilerVersion >= 20}
-    {$WARN IMPLICIT_STRING_CAST OFF}
-    {$WARN IMPLICIT_STRING_CAST_LOSS OFF}
-   {$IfEnd}
-  {$EndIf}
-{$EndIf}
-
-{$IfDef FPC}
-  {$Mode objfpc}{$H+}
-  {$Define USE_UTF8}
-{$EndIf}
-
-{$IfDef POSIX}
-  {$IfDef LINUX}
-    {$Define CONVERT_TO_ANSI}
-    {$Define USE_UTF8}
-  {$EndIf}
-  {$Define FMX}
-  {$Define HAS_SYSTEM_GENERICS}
-{$EndIf}
-
-{$IfDef NEXTGEN}
-  {$ZEROBASEDSTRINGS OFF}
-  {$Define HAS_SYSTEM_GENERICS}
-  {$Define USE_UTF8}
-{$EndIf}
+{$I fpdf.inc}
 
 interface
 
 uses
-  Classes,Contnrs,
+  Classes,
   {$IfDef FPC}
-   zstream
+   zstream,
   {$Else}
-   {$IfDef HAS_SYSTEM_GENERICS}
-    System.Generics.Collections, System.Generics.Defaults,
-   {$EndIf}
-   ZLib
-  {$EndIf},
+   ZLib,
+  {$EndIf}
+  {$IF DEFINED(HAS_SYSTEM_GENERICS)}
+   System.Generics.Collections, System.Generics.Defaults,
+  {$ELSEIF DEFINED(HAS_SYSTEM_CONTNRS)}
+   System.Contnrs,
+  {$Else}
+   Contnrs,
+  {$IfEnd}
   SysUtils;
 
 const
@@ -361,6 +335,7 @@ type
 
     procedure SetTimeZone(const ATimeZone: String = 'Z');
     procedure SetUTF8(mode: Boolean = True);
+    function GetUTF8: Boolean;
 
     procedure Error(const ATextMsg: String; E: Exception = nil);
     procedure Close;
@@ -427,8 +402,8 @@ type
   end;
 
 const
-  CFontEncodeStr: array[TFPDFFontEncode] of shortstring = ('', 'cp1252');
-  CFontType: array[TFPDFFontType] of shortstring =('Core', 'TrueType', 'Type1');
+  CFontEncodeStr: array[TFPDFFontEncode] of string = ('', 'cp1252');
+  CFontType: array[TFPDFFontType] of string =('Core', 'TrueType', 'Type1');
   CPDFRotation: array[TFPDFRotation] of Integer = (0, 90, 180, 270);
   cUNIT: array[TFPDFUnit] of Double = (1, (72 / 25.4), (72 / 2.54), 72, 0.75);
   cCOLOR: array[TFPDFColor] of array [0..2] of smallint = (
@@ -450,6 +425,7 @@ function SwapBytes(Value: Cardinal): Cardinal; overload;
 function SwapBytes(Value: Word): Word; overload;
 function Split(const AString: string; const ADelimiter: string = ' '; ATrimLeft: boolean = True): TStringArray;
 function CountStr(const AString, SubStr : String ) : Integer ;
+function ReplaceString(Value, Search, Replace: AnsiString): AnsiString;  // From synautil.pas
 
 var
   FPDFFormatSetings: TFormatSettings;
@@ -859,6 +835,11 @@ end;
 procedure TFPDF.SetUTF8(mode: Boolean);
 begin
   Self.UseUTF8 := mode;
+end;
+
+function TFPDF.GetUTF8: Boolean;
+begin
+  Result := UseUTF8;
 end;
 
 procedure TFPDF.Error(const ATextMsg: String; E: Exception);
@@ -2503,16 +2484,16 @@ begin
   //Add \ before \, ( and )
   Result := sText;
   if (pos('\', sText) > 0) then
-    Result := StringReplace(Result,  '\', '\\', [rfReplaceAll]);
+    Result := ReplaceString(Result,  '\', '\\');
 
   if (pos(')', sText) > 0) then
-    Result := StringReplace( Result, ')', '\)', [rfReplaceAll]);
+    Result := ReplaceString( Result, ')', '\)');
 
   if (pos('(', sText) > 0) then
-    Result := StringReplace( Result, '(', '\(', [rfReplaceAll]);
+    Result := ReplaceString( Result, '(', '\(');
 
   if (pos(CR, sText) > 0) then
-    Result := StringReplace( Result, CR, '\r', [rfReplaceAll]);
+    Result := ReplaceString( Result, CR, '\r');
 end;
 
 function TFPDF._textstring(const AString: String): String;
@@ -3735,6 +3716,34 @@ begin
      Inc(Result);
      i := PosEx(SubStr, AString, i+1);
   end;
+end;
+
+// From synautil.pas
+function ReplaceString(Value, Search, Replace: AnsiString): AnsiString;
+var
+  x, l, ls, lr: Integer;
+begin
+  if (Value = '') or (Search = '') then
+  begin
+    Result := Value;
+    Exit;
+  end;
+  ls := Length(Search);
+  lr := Length(Replace);
+  Result := '';
+  x := Pos(Search, Value);
+  while x > 0 do
+  begin
+    l := Length(Result);
+    SetLength(Result, l + x - 1);
+    Move(Pointer(Value)^, Pointer(@Result[l + 1])^, x - 1);
+    l := Length(Result);
+    SetLength(Result, l + lr);
+    Move(Pointer(Replace)^, Pointer(@Result[l + 1])^, lr);
+    Delete(Value, 1, x - 1 + ls);
+    x := Pos(Search, Value);
+  end;
+  Result := Result + Value;
 end;
 
 initialization
