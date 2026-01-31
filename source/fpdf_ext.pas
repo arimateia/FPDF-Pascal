@@ -1179,6 +1179,17 @@ end;
 
 function TFPDFExt.WordWrap(var AText: string; AMaxWidth,
   AIndent: double): integer;
+
+  function TrimRightSpacesTabs(const S: string): string;
+  var
+    I: Integer;
+  begin
+    I := Length(S);
+    while (I > 0) and ((S[I] = ' ') or (S[I] = #9)) do
+      Dec(I);
+    Result := Copy(S, 1, I);
+  end;
+
 { http://www.fpdf.org/en/script/script49.php - Ron Korving }
 var
   Space, Width, WordWidth: Double;
@@ -1221,7 +1232,7 @@ begin
           else
           begin
             Width := WordWidth;
-            AText := TrimRight(AText) + sLineBreak + Copy(Word, L, 1);
+            AText := TrimRightSpacesTabs(AText) + sLineBreak + Copy(Word, L, 1);
             Inc(Result);
             AMaxWidth := AMaxWidth + AIndent;
           end;
@@ -1236,12 +1247,12 @@ begin
         else
         begin
           Width := WordWidth + Space;
-          AText := TrimRight(AText) + sLineBreak + Word + ' ';
+          AText := TrimRightSpacesTabs(AText) + sLineBreak + Word + ' ';
           Inc(Result);
           AMaxWidth := AMaxWidth + AIndent;
         end;
     end;
-    AText := TrimRight(AText) + sLineBreak;
+    AText := TrimRightSpacesTabs(AText) + sLineBreak;
     Inc(Result);
     AMaxWidth := AMaxWidth + AIndent;
   end;
